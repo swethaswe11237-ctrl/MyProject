@@ -1,13 +1,327 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DeepGuard — AI Deepfake Video Detection</title>
-  <meta name="description" content="Detect deepfake videos in real-time using CNN-LSTM AI. Upload a video for full analysis or use live detection as it plays."/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="main.css"/>
+  <meta name="description" content="Detect deepfake videos in real-time using CNN-LSTM AI. Upload a video for full analysis or use live detection as it plays." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="main.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+  <div class="bg-root" aria-hidden="true">
+    <div class="bg-grid"></div>
+    <div class="bg-orb orb1"></div>
+    <div class="bg-orb orb2"></div>
+    <div class="bg-orb orb3"></div>
+  </div>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner container">
+      <a href="#" class="nav-logo" onclick="resetAll(); return false;">
+        <div class="logo-shield">🛡️</div>
+        <span class="logo-text">Deep<span class="grad">Guard</span></span>
+      </a>
+      <div class="nav-links">
+        <a href="#upload-section" class="nav-link" onclick="switchMode('upload')">Upload Analysis</a>
+        <a href="#live-section" class="nav-link" onclick="switchMode('live')">Live Detection</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+      </div>
+      <div class="nav-status" id="navStatus">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Checking API…</span>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero" id="hero">
+      <div class="container hero-inner">
+        <div class="hero-pill"><span class="pill-dot"></span> CNN-LSTM · EfficientNet-B0 · Real-time</div>
+        <h1 class="hero-title">Detect <span class="grad">Deepfake</span><br />Videos Instantly</h1>
+        <p class="hero-sub">
+          Upload any video for deep CNN-LSTM analysis, or watch AI detect fakes<br />
+          <strong>frame-by-frame in real time</strong> as your video plays.
+        </p>
+        <div class="hero-btns">
+          <button class="btn-primary" onclick="switchMode('upload'); scrollToApp()">📤 Upload &amp; Analyze</button>
+          <button class="btn-outline" onclick="switchMode('live'); scrollToApp()">🔴 Live Detection</button>
+        </div>
+        <div class="hero-stats">
+          <div class="hstat"><span class="hstat-n">EfficientNet</span><span class="hstat-l">Feature Extractor</span></div>
+          <div class="hstat-div"></div>
+          <div class="hstat"><span class="hstat-n">Bi-LSTM</span><span class="hstat-l">Temporal Analysis</span></div>
+          <div class="hstat-div"></div>
+          <div class="hstat"><span class="hstat-n">20 Frames</span><span class="hstat-l">Per Video Scan</span></div>
+          <div class="hstat-div"></div>
+          <div class="hstat"><span class="hstat-n">2 FPS</span><span class="hstat-l">Live Inference</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="app-section" id="app-section">
+      <div class="container">
+        <div class="mode-tabs" role="tablist" aria-label="Detection mode">
+          <button class="mode-tab active" id="tab-upload" role="tab" aria-selected="true" aria-controls="upload-section" onclick="switchMode('upload')">
+            <span class="tab-icon">📤</span>
+            <span class="tab-label">Upload &amp; Analyze</span>
+            <span class="tab-desc">Full CNN-LSTM video scan</span>
+          </button>
+          <button class="mode-tab" id="tab-live" role="tab" aria-selected="false" aria-controls="live-section" onclick="switchMode('live')">
+            <span class="tab-icon">📹</span>
+            <span class="tab-label">Live Webcam Biometrics</span>
+            <span class="tab-desc">Cam ON · Blinks, Micromovements &amp; Voice</span>
+          </button>
+        </div>
+
+        <div class="panel" id="upload-section" role="tabpanel" aria-labelledby="tab-upload">
+          <div id="uploadZone" class="upload-zone" ondragover="doDragOver(event)" ondragleave="doDragLeave(event)" ondrop="doDrop(event)" onclick="document.getElementById('fileInput').click()" tabindex="0" role="button" aria-label="Upload video file" onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('fileInput').click()">
+            <div class="uz-icon">🎬</div>
+            <div class="uz-title">Drag &amp; Drop Your Video</div>
+            <p class="uz-sub">or click to browse from your device</p>
+            <div class="uz-formats">
+              <span class="fmt">.MP4</span><span class="fmt">.MOV</span><span class="fmt">.AVI</span><span class="fmt">.MKV</span><span class="fmt">.WEBM</span>
+            </div>
+            <button class="btn-outline" style="margin-top:18px;" type="button">📂 Browse File</button>
+            <input type="file" id="fileInput" accept="video/*" onchange="onFileSelect(event)" hidden />
+          </div>
+
+          <div class="file-info-bar" id="fileInfoBar" style="display:none;">
+            <div class="fib-left">
+              <div class="fib-icon">🎞️</div>
+              <div>
+                <div class="fib-name" id="fibName">video.mp4</div>
+                <div class="fib-meta" id="fibMeta">—</div>
+              </div>
+            </div>
+            <div class="fib-right">
+              <button class="btn-primary" id="btnAnalyze" onclick="startAnalysis()">🔍 Analyze Now</button>
+              <button class="btn-ghost" onclick="clearFile()">✕</button>
+            </div>
+          </div>
+
+          <div class="progress-wrap" id="progressWrap" style="display:none;" aria-live="polite">
+            <div class="progress-steps" id="progressSteps">
+              <div class="pstep" data-step="0"><div class="pstep-icon">📤</div><div class="pstep-label">Upload</div></div>
+              <div class="pstep-line"></div>
+              <div class="pstep" data-step="1"><div class="pstep-icon">🎞️</div><div class="pstep-label">Extract Frames</div></div>
+              <div class="pstep-line"></div>
+              <div class="pstep" data-step="2"><div class="pstep-icon">👤</div><div class="pstep-label">Detect Faces</div></div>
+              <div class="pstep-line"></div>
+              <div class="pstep" data-step="3"><div class="pstep-icon">🧠</div><div class="pstep-label">CNN Features</div></div>
+              <div class="pstep-line"></div>
+              <div class="pstep" data-step="4"><div class="pstep-icon">🔁</div><div class="pstep-label">LSTM Analysis</div></div>
+              <div class="pstep-line"></div>
+              <div class="pstep" data-step="5"><div class="pstep-icon">✅</div><div class="pstep-label">Verdict</div></div>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-msg" id="progressMsg">Uploading video…</div>
+          </div>
+
+          <div class="results-panel" id="resultsPanel" style="display:none;" aria-live="polite">
+            <div class="results-header">
+              <h2 class="results-title">Analysis Complete</h2>
+              <div class="results-header-right">
+                <button class="btn-ghost" onclick="exportReport()">📄 Export</button>
+                <button class="btn-ghost" onclick="clearFile()">↺ New Video</button>
+              </div>
+            </div>
+            <div class="result-hero-grid">
+              <div class="verdict-card" id="verdictCard">
+                <div class="vc-label">VERDICT</div>
+                <div class="vc-word" id="vcWord">—</div>
+                <div class="vc-conf" id="vcConf">—</div>
+                <div class="vc-desc" id="vcDesc">—</div>
+                <div class="vc-badges" id="vcBadges"></div>
+              </div>
+              <div class="gauge-card">
+                <div class="gauge-title">Deepfake Confidence</div>
+                <div class="gauge-wrap" id="gaugeWrap">
+                  <svg class="gauge-svg" viewBox="0 0 200 130" aria-label="Confidence gauge">
+                    <defs>
+                      <linearGradient id="gFake" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#ff6b6b"/><stop offset="100%" stop-color="#ff1744"/>
+                      </linearGradient>
+                      <linearGradient id="gReal" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#69f0ae"/><stop offset="100%" stop-color="#00e676"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M 25 105 A 75 75 0 1 1 175 105" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="14" stroke-linecap="round"/>
+                    <path id="gaugePath" d="M 25 105 A 75 75 0 1 1 175 105" fill="none" stroke="url(#gFake)" stroke-width="14" stroke-linecap="round" stroke-dasharray="235.6" stroke-dashoffset="235.6" style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1), stroke .5s;transform-origin:center;transform:rotate(0deg)"/>
+                    <text id="gaugePct" x="100" y="96" text-anchor="middle" fill="#f0f0ff" font-size="30" font-weight="900" font-family="Space Grotesk,sans-serif">0%</text>
+                    <text x="100" y="113" text-anchor="middle" fill="#555577" font-size="11" font-family="Inter,sans-serif">FAKE PROBABILITY</text>
+                    <text x="25" y="122" text-anchor="middle" fill="#555577" font-size="9" font-family="Inter,sans-serif">REAL</text>
+                    <text x="175" y="122" text-anchor="middle" fill="#555577" font-size="9" font-family="Inter,sans-serif">FAKE</text>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="stats-row" id="statsRow">
+              <div class="stat-card"><div class="sc-icon">🎬</div><div class="sc-val" id="scFrames">—</div><div class="sc-label">Total Frames</div></div>
+              <div class="stat-card"><div class="sc-icon">🔴</div><div class="sc-val red" id="scFake">—</div><div class="sc-label">Fake Frames</div></div>
+              <div class="stat-card"><div class="sc-icon">🟢</div><div class="sc-val green" id="scReal">—</div><div class="sc-label">Real Frames</div></div>
+              <div class="stat-card"><div class="sc-icon">⚡</div><div class="sc-val cyan" id="scAvg">—</div><div class="sc-label">Avg Confidence</div></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-header">
+                <span class="chart-title">📈 Frame-by-Frame Analysis</span>
+                <span class="chart-sub">CNN feature score per extracted frame</span>
+              </div>
+              <canvas id="resultChart" height="160"></canvas>
+            </div>
+
+            <div class="frames-card">
+              <div class="chart-header" style="margin-bottom:16px;">
+                <span class="chart-title">🎞️ Analyzed Frames</span>
+                <span class="chart-sub">Click any frame to inspect</span>
+              </div>
+              <div class="frame-grid" id="frameGrid"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="live-section" role="tabpanel" aria-labelledby="tab-live" style="display:none;">
+          <div class="webcam-panel-inner">
+            <div class="webcam-top-bar">
+              <div>
+                <h3 style="font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px;">
+                  <span>📹 Live Biometric Liveness &amp; Deepfake Analysis</span>
+                </h3>
+                <p style="font-size:0.78rem;color:var(--text-sec);margin-top:2px;">
+                  Analyzes real-time blinking frequency, involuntary facial micro-movements, voice energy &amp; lip-sync.
+                </p>
+              </div>
+              <div class="webcam-controls-group">
+                <button class="btn-primary" id="btnToggleCam" onclick="toggleWebcam()"><span>📹 Start Camera &amp; Mic</span></button>
+                <button class="btn-ghost" id="btnToggleAudio" onclick="toggleAudio()" title="Toggle Voice Analysis"><span id="audioBtnIcon">🎙️ Voice: ON</span></button>
+              </div>
+            </div>
+            <div class="webcam-stage">
+              <div class="webcam-viewport" id="camViewport">
+                <video id="webcamVideo" playsinline autoplay muted></video>
+                <canvas id="webcamOverlay"></canvas>
+                <div class="cam-idle-placeholder" id="camPlaceholder">
+                  <div class="cam-idle-icon">📹</div>
+                  <div class="cam-idle-text">Camera is currently inactive</div>
+                  <button class="btn-primary" onclick="toggleWebcam()" style="font-size:0.85rem;padding:10px 20px;">▶ Turn On Camera &amp; Mic</button>
+                  <p style="font-size:0.72rem;color:var(--text-muted);max-width:320px;text-align:center;">Runs 100% locally in your browser. Video &amp; audio stay private on your device.</p>
+                </div>
+                <div class="cam-hud-badge" id="camHudBadge">
+                  <span class="chb-score" id="chbScore">—%</span>
+                  <span class="chb-label" id="chbLabel">ANALYZING</span>
+                </div>
+                <div class="audio-vu-meter" id="audioVuMeter">
+                  <span class="avu-icon">🎙️</span>
+                  <div class="avu-track"><div class="avu-fill" id="avuFill"></div></div>
+                  <span class="avu-val" id="avuVal">0 dB</span>
+                </div>
+              </div>
+
+              <div class="biometric-telemetry">
+                <div class="live-verdict-banner" id="liveVerdictBanner">
+                  <div class="lv-label">LIVENESS / AUTHENTICITY VERDICT</div>
+                  <div class="lv-word" id="lvWord">STANDBY</div>
+                  <div class="lv-desc" id="lvDesc">Start camera to analyze face biometrics</div>
+                </div>
+
+                <div class="bio-card" id="bioCard">
+                  <div class="bio-card-title">
+                    <span>Real-Time Biomarkers</span>
+                    <span class="bio-status-badge idle" id="bioStatusBadge">IDLE</span>
+                  </div>
+                  <div class="bio-metric-row">
+                    <div class="bm-item">
+                      <div class="bm-header"><span class="bm-name">👁️ Blink Frequency &amp; EAR</span><span class="bm-value" id="valBlink">0 bpm</span></div>
+                      <div class="bm-bar-track"><div class="bm-bar-fill" id="barBlink" style="width:10%;background:var(--text-muted)"></div></div>
+                      <div class="bm-status-text" id="statusBlink">Waiting for face…</div>
+                    </div>
+                    <div class="bm-item">
+                      <div class="bm-header"><span class="bm-name">✨ Micro-Movements (Tremor)</span><span class="bm-value" id="valTremor">0.0 px</span></div>
+                      <div class="bm-bar-track"><div class="bm-bar-fill" id="barTremor" style="width:10%;background:var(--text-muted)"></div></div>
+                      <div class="bm-status-text" id="statusTremor">Involuntary micro-saccades tracking</div>
+                    </div>
+                    <div class="bm-item">
+                      <div class="bm-header"><span class="bm-name">👄 Lip-Sync &amp; Speech</span><span class="bm-value" id="valLipSync">0%</span></div>
+                      <div class="bm-bar-track"><div class="bm-bar-fill" id="barLipSync" style="width:10%;background:var(--text-muted)"></div></div>
+                      <div class="bm-status-text" id="statusLipSync">Audio energy vs mouth openness</div>
+                    </div>
+                    <div class="bm-item">
+                      <div class="bm-header"><span class="bm-name">🩺 rPPG Hemodynamic Pulse</span><span class="bm-value" id="valPulse">Scanning…</span></div>
+                      <div class="bm-bar-track"><div class="bm-bar-fill" id="barPulse" style="width:15%;background:var(--cyan)"></div></div>
+                      <div class="bm-status-text" id="statusPulse">Capillary green-channel absorption</div>
+                    </div>
+                    <div class="bm-item">
+                      <div class="bm-header"><span class="bm-name">🧠 Server Forensics (FFT)</span><span class="bm-value" id="valFFT">0%</span></div>
+                      <div class="bm-bar-track"><div class="bm-bar-fill" id="barFFT" style="width:10%;background:var(--purple-light)"></div></div>
+                      <div class="bm-status-text" id="statusFFT">Frequency grid &amp; texture residue</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display:flex;gap:8px;">
+                  <button class="btn-ghost" style="flex:1;justify-content:center;" onclick="resetWebcamStats()">↺ Reset Telemetry</button>
+                  <button class="btn-ghost" style="flex:1;justify-content:center;" onclick="exportWebcamReport()">📄 Export Report</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="how-section" id="how-it-works">
+      <div class="container">
+        <div class="section-header">
+          <div class="hero-pill"><span class="pill-dot"></span>Under the Hood</div>
+          <h2 class="section-title">How DeepGuard Works</h2>
+          <p class="section-sub">A two-stage deep learning pipeline that catches spatial and temporal forgery artifacts.</p>
+        </div>
+        <div class="how-grid">
+          <div class="how-card"><div class="hc-num">01</div><div class="hc-icon">🎞️</div><h3>Frame Extraction</h3><p>OpenCV extracts 20 uniformly spaced frames from your video. Haar Cascade detects and crops faces with padding, falling back to center-crop if no face is found.</p></div>
+          <div class="how-card"><div class="hc-num">02</div><div class="hc-icon">🧠</div><h3>CNN Feature Extraction</h3><p>Each frame passes through <strong>EfficientNet-B0</strong>, producing a 1280-dim spatial feature vector. A projection layer reduces it to 512-dim for the LSTM.</p></div>
+          <div class="how-card"><div class="hc-num">03</div><div class="hc-icon">🔁</div><h3>Bi-LSTM Temporal Analysis</h3><p>A <strong>Bidirectional LSTM</strong> (256 hidden, 2 layers) analyzes the feature sequence across all frames, capturing temporal inconsistencies that CNNs alone miss.</p></div>
+          <div class="how-card"><div class="hc-num">04</div><div class="hc-icon">⚖️</div><h3>Classification &amp; Verdict</h3><p>A dropout + linear head outputs a fake probability score. Frames ≥ 50% are flagged as fake. The final verdict aggregates all frame scores.</p></div>
+        </div>
+
+        <div class="arch-diagram">
+          <div class="arch-node input">Video<br /><small>any format</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node proc">Frame<br />Extraction<br /><small>20 frames</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node proc">Face<br />Detection<br /><small>Haar Cascade</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node cnn">EfficientNet-B0<br /><small>1280-dim</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node lstm">Bi-LSTM<br /><small>256×2</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node out">Verdict<br /><small>FAKE / REAL</small></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-logo"><span>🛡️</span><span class="logo-text">Deep<span class="grad">Guard</span></span></div>
+      <p class="footer-text">Built with PyTorch · EfficientNet-B0 · Bidirectional LSTM · Flask · Chart.js</p>
+      <p class="footer-text" style="font-size:0.75rem;margin-top:4px;color:#333355;">Running in demo mode — place trained weights at <code>backend/model/weights/deepfake_cnnlstm.pth</code> for real inference.</p>
+    </div>
+  </footer>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal()" style="display:none;" role="dialog" aria-modal="true" aria-label="Frame detail">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+      <canvas id="modalCanvas" width="320" height="240"></canvas>
+      <div class="modal-info" id="modalInfo"></div>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
